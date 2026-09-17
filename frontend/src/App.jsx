@@ -1,8 +1,18 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppShell from './components/AppShell'
 import { RequireAuth } from './components/RouteGuards'
+import RequireStaff from './components/RequireStaff'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
+import AdminAuditLogs from './pages/admin/AdminAuditLogs'
+import AdminCommunity from './pages/admin/AdminCommunity'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminLogin from './pages/admin/AdminLogin'
+import AdminPartnerDetail from './pages/admin/AdminPartnerDetail'
+import AdminPartners from './pages/admin/AdminPartners'
+import AdminShell from './pages/admin/AdminShell'
+import AdminSupport from './pages/admin/AdminSupport'
+import AdminVerification from './pages/admin/AdminVerification'
 import AroundYouTab from './pages/dashboard/AroundYouTab'
 import CommunityTab from './pages/dashboard/CommunityTab'
 import JobDetailPage from './pages/dashboard/JobDetailPage'
@@ -58,6 +68,20 @@ export default function App() {
               <Route path="support" element={<SupportPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="jobs/:jobId" element={<JobDetailPage />} />
+            </Route>
+          </Route>
+
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route element={<RequireStaff />}>
+            <Route path="/admin" element={<AdminShell />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="partners" element={<AdminPartners />} />
+              <Route path="partners/:partnerId" element={<AdminPartnerDetail />} />
+              <Route path="verification" element={<AdminVerification />} />
+              <Route path="support" element={<AdminSupport />} />
+              <Route path="community" element={<AdminCommunity />} />
+              <Route path="audit-logs" element={<AdminAuditLogs />} />
             </Route>
           </Route>
 
