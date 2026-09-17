@@ -63,22 +63,40 @@ public class MoneyService {
 
     public record Summary(long estimatedPaise, long earnedPaise, long availablePaise, long scheduledPaise, long paidPaise) {}
 
+    /**
+     * {@code earnedPaise} is scoped to [from, to) (e.g. "this month", for display).
+     * {@code availablePaise} is a lifetime running balance -- lifetime earned +
+     * adjustments minus lifetime paid/in-flight payouts -- never scoped to the
+     * display window, since a payout request must be checked against the
+     * partner's whole history, not just this month's earnings (otherwise a
+     * partner with prior-month earnings would show an incorrect, possibly
+     * negative, available balance every month after their first).
+     */
     public Summary summary(Long partnerId, Instant from, Instant to) {
-        List<EarningEntry> entries = earningEntryRepository.findAllByPartnerIdAndEarnedAtBetweenOrderByEarnedAtDesc(partnerId, from, to);
-        long earned = entries.stream().filter(e -> e.getStatus() == EarningEntry.Status.EARNED).mapToLong(EarningEntry::getNetPaise).sum();
-        long adjustments = earningAdjustmentRepository.findAllByPartnerIdOrderByCreatedAtDesc(partnerId).stream()
+        List<EarningEntry> allEntries = earningEntryRepository.findAllByPartnerIdOrderByEarnedAtDesc(partnerId);
+        long earnedThisPeriod = allEntries.stream()
+                .filter(e -> e.getStatus() == EarningEntry.Status.EARNED)
+                .filter(e -> !e.getEarnedAt().isBefore(from) && e.getEarnedAt().isBefore(to))
+                .mapToLong(EarningEntry::getNetPaise).sum();
+        long lifetimeEarned = allEntries.stream()
+                .filter(e -> e.getStatus() == EarningEntry.Status.EARNED)
+                .mapToLong(EarningEntry::getNetPaise).sum();
+
+        long lifetimeAdjustments = earningAdjustmentRepository.findAllByPartnerIdOrderByCreatedAtDesc(partnerId).stream()
                 .mapToLong(a -> switch (a.getType()) {
                     case BONUS -> a.getAmountPaise();
                     case PENALTY, DEDUCTION, REVERSAL -> -a.getAmountPaise();
                 }).sum();
-        long paid = payoutRepository.findAllByPartnerIdOrderByRequestedAtDesc(partnerId).stream()
+        List<Payout> allPayouts = payoutRepository.findAllByPartnerIdOrderByRequestedAtDesc(partnerId);
+        long lifetimePaid = allPayouts.stream()
                 .filter(p -> p.getStatus() == Payout.Status.PAID || p.getStatus() == Payout.Status.MANUAL_RECONCILED)
                 .mapToLong(Payout::getAmountPaise).sum();
-        long inFlight = payoutRepository.findAllByPartnerIdOrderByRequestedAtDesc(partnerId).stream()
+        long lifetimeInFlight = allPayouts.stream()
                 .filter(p -> p.getStatus() == Payout.Status.REQUESTED || p.getStatus() == Payout.Status.SCHEDULED || p.getStatus() == Payout.Status.PROCESSING)
                 .mapToLong(Payout::getAmountPaise).sum();
-        long available = earned + adjustments - paid - inFlight;
-        return new Summary(earned, earned, Math.max(0, available), inFlight, paid);
+
+        long available = lifetimeEarned + lifetimeAdjustments - lifetimePaid - lifetimeInFlight;
+        return new Summary(earnedThisPeriod, earnedThisPeriod, Math.max(0, available), lifetimeInFlight, lifetimePaid);
     }
 
     public List<EarningEntry> ledger(Long partnerId) {

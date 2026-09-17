@@ -77,6 +77,11 @@ public class TrainingService {
 
     @Transactional
     public ModuleProgress markModuleComplete(Long partnerId, Long courseId, Long moduleId) {
+        TrainingModule module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new NotFoundException("Module not found."));
+        if (!module.getCourseId().equals(courseId)) {
+            throw new BadRequestException("This module does not belong to the given course.");
+        }
         TrainingEnrollment enrollment = getOrCreateEnrollment(partnerId, courseId);
         if (enrollment.getStatus() == TrainingEnrollment.Status.NOT_STARTED) {
             enrollment.setStatus(TrainingEnrollment.Status.IN_PROGRESS);
