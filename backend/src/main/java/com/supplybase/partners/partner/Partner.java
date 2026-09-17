@@ -37,7 +37,7 @@ public class Partner {
     @Column(name = "photo_storage_key", length = 300)
     private String photoStorageKey;
 
-    @Column(name = "experience_years")
+    @Column(name = "experience_years", columnDefinition = "TINYINT UNSIGNED")
     private Integer experienceYears;
 
     @Column(length = 1000)

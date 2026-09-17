@@ -150,7 +150,7 @@ public class KitOrderService {
         auditService.record(actorUserId, "KIT_ORDER_STATUS_CHANGED", "KitOrder", order.getId(), "New status: " + newStatus);
         partnerRepository.findById(order.getPartnerId()).ifPresent(p -> notificationService.enqueue(
                 p.getUserId(), NotificationOutbox.Channel.INAPP, "kit.order.status",
-                null, "{\"orderId\":" + order.getId() + ",\"status\":\"" + newStatus + "\"}"));
+                null, java.util.Map.of("orderId", order.getId(), "status", newStatus.name())));
 
         if (newStatus == KitOrder.Status.DELIVERED) {
             partnerService.advanceStageIfCurrent(order.getPartnerId(), OnboardingStage.STARTER_KIT, OnboardingStage.PROFILE);

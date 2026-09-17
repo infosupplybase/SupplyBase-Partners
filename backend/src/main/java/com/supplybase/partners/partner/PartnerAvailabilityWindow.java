@@ -21,7 +21,7 @@ public class PartnerAvailabilityWindow {
     @Column(name = "partner_id", nullable = false)
     private Long partnerId;
 
-    @Column(name = "day_of_week", nullable = false)
+    @Column(name = "day_of_week", nullable = false, columnDefinition = "TINYINT UNSIGNED")
     private int dayOfWeek;
 
     @Column(name = "start_time", nullable = false)

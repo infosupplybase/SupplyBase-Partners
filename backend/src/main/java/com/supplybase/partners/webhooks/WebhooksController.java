@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 
@@ -22,10 +23,12 @@ public class WebhooksController {
 
     private final WebhookSignatureVerifier verifier;
     private final MoneyService moneyService;
+    private final ObjectMapper objectMapper;
 
-    public WebhooksController(WebhookSignatureVerifier verifier, MoneyService moneyService) {
+    public WebhooksController(WebhookSignatureVerifier verifier, MoneyService moneyService, ObjectMapper objectMapper) {
         this.verifier = verifier;
         this.moneyService = moneyService;
+        this.objectMapper = objectMapper;
     }
 
     @PostMapping("/payouts")
@@ -35,7 +38,7 @@ public class WebhooksController {
         Map<String, Object> payload = (Map<String, Object>) body.get("payload");
         Long payoutId = Long.valueOf(payload.get("payoutId").toString());
         String eventType = payload.get("eventType").toString();
-        moneyService.handlePayoutWebhookEvent(payoutId, eventType, body.get("eventId").toString(), payload.toString());
+        moneyService.handlePayoutWebhookEvent(payoutId, eventType, body.get("eventId").toString(), toJson(payload));
         return ResponseEntity.ok().build();
     }
 
@@ -56,9 +59,14 @@ public class WebhooksController {
         if (eventId == null || payload == null || signature == null) {
             throw new BadRequestException("eventId, payload and signature are required.");
         }
-        String canonical = eventId + payload.toString();
+        String canonical = eventId + toJson(payload);
         if (!verifier.verify(canonical, signature.toString())) {
             throw new BadRequestException("Invalid webhook signature.");
         }
+    }
+
+    /** payloadJson columns are typed JSON in MySQL -- Map#toString() ("{k=v}") is not valid JSON and would fail on insert. */
+    private String toJson(Object value) {
+        return objectMapper.writeValueAsString(value);
     }
 }

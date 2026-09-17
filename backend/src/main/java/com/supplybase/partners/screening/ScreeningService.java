@@ -83,10 +83,9 @@ public class ScreeningService {
     private void notifyBookingConfirmed(Long partnerId, ScreeningSlot slot) {
         Partner partner = partnerRepository.findById(partnerId).orElse(null);
         if (partner == null) return;
-        String payload = "{\"slotId\":" + slot.getId() + ",\"startsAt\":\"" + slot.getStartsAt() +
-                "\",\"venueOrLink\":\"" + slot.getVenueOrLink().replace("\"", "'") + "\"}";
         notificationService.enqueue(partner.getUserId(), NotificationOutbox.Channel.INAPP,
-                "screening.booking.confirmed", null, payload);
+                "screening.booking.confirmed", null,
+                java.util.Map.of("slotId", slot.getId(), "startsAt", slot.getStartsAt().toString(), "venueOrLink", slot.getVenueOrLink()));
     }
 
     @Transactional

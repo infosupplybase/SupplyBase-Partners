@@ -46,10 +46,10 @@ public class ScreeningSlot {
     @Column(name = "check_in_closes_at", nullable = false)
     private Instant checkInClosesAt;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "INT UNSIGNED")
     private int capacity;
 
-    @Column(name = "booked_count", nullable = false)
+    @Column(name = "booked_count", nullable = false, columnDefinition = "INT UNSIGNED")
     private int bookedCount;
 
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -24,10 +24,10 @@ public class AssessmentAttempt {
     @Column(name = "partner_id", nullable = false)
     private Long partnerId;
 
-    @Column(name = "attempt_number", nullable = false)
+    @Column(name = "attempt_number", nullable = false, columnDefinition = "INT UNSIGNED")
     private int attemptNumber;
 
-    @Column(name = "score_percent", nullable = false)
+    @Column(name = "score_percent", nullable = false, columnDefinition = "TINYINT UNSIGNED")
     private int scorePercent;
 
     @Column(nullable = false)

@@ -21,7 +21,7 @@ public class NotificationDeliveryAttempt {
     @Column(name = "outbox_id", nullable = false)
     private Long outboxId;
 
-    @Column(name = "attempt_number", nullable = false)
+    @Column(name = "attempt_number", nullable = false, columnDefinition = "INT UNSIGNED")
     private int attemptNumber;
 
     @Column(nullable = false, length = 24)

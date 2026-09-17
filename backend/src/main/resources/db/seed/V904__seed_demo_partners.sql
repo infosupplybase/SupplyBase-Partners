@@ -45,9 +45,9 @@ INSERT INTO screening_booking (slot_id, partner_id, status)
 SELECT ss.id, @p4, 'BOOKED'
 FROM screening_slot ss JOIN category c ON c.id = ss.category_id JOIN city ci ON ci.id = ss.city_id
 WHERE c.slug = 'cleaning' AND ci.name = 'Mumbai' ORDER BY ss.starts_at LIMIT 1;
-UPDATE screening_slot ss JOIN category c ON c.id = ss.category_id JOIN city ci ON ci.id = ss.city_id
+UPDATE screening_slot ss JOIN screening_booking sb ON sb.slot_id = ss.id
 SET ss.booked_count = ss.booked_count + 1, ss.version = ss.version + 1
-WHERE c.slug = 'cleaning' AND ci.name = 'Mumbai' ORDER BY ss.starts_at LIMIT 1;
+WHERE sb.partner_id = @p4;
 
 -- 5) Screening passed, at the starter-kit stage (kit ordered, still processing).
 INSERT INTO app_user (phone_e164, name, preferred_language, status) VALUES ('+919800000005', 'Ravi Deshmukh', 'en', 'ACTIVE');

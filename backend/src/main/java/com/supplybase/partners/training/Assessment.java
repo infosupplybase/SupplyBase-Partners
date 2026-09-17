@@ -22,9 +22,9 @@ public class Assessment {
     @Column(nullable = false, length = 200)
     private String title;
 
-    @Column(name = "pass_score_percent", nullable = false)
+    @Column(name = "pass_score_percent", nullable = false, columnDefinition = "TINYINT UNSIGNED")
     private int passScorePercent = 70;
 
-    @Column(name = "max_attempts", nullable = false)
+    @Column(name = "max_attempts", nullable = false, columnDefinition = "INT UNSIGNED")
     private int maxAttempts = 3;
 }

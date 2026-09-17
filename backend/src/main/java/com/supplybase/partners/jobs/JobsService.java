@@ -117,7 +117,7 @@ public class JobsService {
         }
         historyRepository.save(new JobStatusHistory(requestId, "OPEN", "ASSIGNED", partner.getUserId(), null));
         notificationService.enqueue(partner.getUserId(), NotificationOutbox.Channel.INAPP, "job.assigned",
-                null, "{\"jobId\":" + requestId + "}");
+                null, java.util.Map.of("jobId", requestId));
         return serviceRequestRepository.findById(requestId).orElseThrow();
     }
 

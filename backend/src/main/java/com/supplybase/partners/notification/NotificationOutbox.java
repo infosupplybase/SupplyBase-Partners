@@ -41,7 +41,7 @@ public class NotificationOutbox {
     @Column(nullable = false, length = 16)
     private Status status = Status.QUEUED;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "INT UNSIGNED")
     private int attempts = 0;
 
     @Column(name = "last_attempt_at")

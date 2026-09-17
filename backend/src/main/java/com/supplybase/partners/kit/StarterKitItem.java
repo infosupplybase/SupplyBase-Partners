@@ -22,6 +22,6 @@ public class StarterKitItem {
     @Column(nullable = false, length = 150)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "INT UNSIGNED")
     private int quantity = 1;
 }

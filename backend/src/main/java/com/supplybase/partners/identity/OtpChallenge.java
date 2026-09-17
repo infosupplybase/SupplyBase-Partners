@@ -32,10 +32,10 @@ public class OtpChallenge {
     @Column(name = "code_hash", nullable = false)
     private String codeHash;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "INT UNSIGNED")
     private int attempts = 0;
 
-    @Column(name = "max_attempts", nullable = false)
+    @Column(name = "max_attempts", nullable = false, columnDefinition = "INT UNSIGNED")
     private int maxAttempts = 5;
 
     @Column(name = "expires_at", nullable = false)
