@@ -38,10 +38,10 @@ decisions made where the PDF only described behavior, not layout.
   extension points instead).
 - A live map view on Around You (list view only; an honest "map not available"
   note is shown rather than a broken map).
-- Dedicated admin screens for services/areas/estimates/policies/training
-  authoring (the REST endpoints exist and were exercised directly; no
-  frontend page wraps them yet). Categories/cities
-  (`AdminCatalog.jsx`), screening slot creation + outcome decisions
-  (`AdminScreening.jsx`), starter-kit fulfillment status
-  (`AdminKitOrders.jsx`), and synthetic customer/job creation + completion
-  confirmation (`AdminJobs.jsx`) all have admin screens.
+- Dedicated admin screens for services/areas/estimates/policies authoring
+  (the REST endpoints exist and were exercised directly; no frontend page
+  wraps them yet). Categories/cities (`AdminCatalog.jsx`), screening slot
+  creation + outcome decisions (`AdminScreening.jsx`), starter-kit
+  fulfillment status (`AdminKitOrders.jsx`), synthetic customer/job creation +
+  completion confirmation (`AdminJobs.jsx`), and training course/module/
+  assessment/question authoring (`AdminTraining.jsx`) all have admin screens.

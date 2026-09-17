@@ -16,6 +16,7 @@ import AdminPartners from './pages/admin/AdminPartners'
 import AdminScreening from './pages/admin/AdminScreening'
 import AdminShell from './pages/admin/AdminShell'
 import AdminSupport from './pages/admin/AdminSupport'
+import AdminTraining from './pages/admin/AdminTraining'
 import AdminVerification from './pages/admin/AdminVerification'
 import AroundYouTab from './pages/dashboard/AroundYouTab'
 import CommunityTab from './pages/dashboard/CommunityTab'
@@ -87,6 +88,7 @@ export default function App() {
               <Route path="screening" element={<AdminScreening />} />
               <Route path="kit-orders" element={<AdminKitOrders />} />
               <Route path="jobs" element={<AdminJobs />} />
+              <Route path="training" element={<AdminTraining />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="community" element={<AdminCommunity />} />
               <Route path="audit-logs" element={<AdminAuditLogs />} />

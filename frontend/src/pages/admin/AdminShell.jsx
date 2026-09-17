@@ -9,6 +9,7 @@ const LINKS = [
   { to: '/admin/screening', label: 'Screening' },
   { to: '/admin/kit-orders', label: 'Kit orders' },
   { to: '/admin/jobs', label: 'Jobs' },
+  { to: '/admin/training', label: 'Training' },
   { to: '/admin/support', label: 'Support' },
   { to: '/admin/community', label: 'Community' },
   { to: '/admin/audit-logs', label: 'Audit logs' },
