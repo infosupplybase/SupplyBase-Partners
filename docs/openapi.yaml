@@ -1,0 +1,546 @@
+openapi: 3.0.3
+info:
+  title: SupplyBase Partners API
+  version: "1.0"
+  description: |
+    REST API for the SupplyBase Partners platform. All endpoints are under
+    `/api/v1`. Authentication is a session cookie (`SB_SESSION`, HttpOnly) set
+    by `/auth/otp/verify` (partners) or `/auth/staff/login` (staff). Mutating
+    requests require a CSRF header (`X-XSRF-TOKEN`) echoing the `XSRF-TOKEN`
+    cookie value, per Spring Security's SPA CSRF pattern -- fetch any GET
+    endpoint first to receive that cookie.
+
+    Money amounts are always integer **paise** (INR/100). Timestamps are
+    ISO-8601 UTC; the business timezone (Asia/Kolkata) is applied only for
+    display/aggregation (e.g. Money summary's "this month" boundary).
+servers:
+  - url: /api/v1
+tags:
+  - name: Auth
+  - name: Catalog
+  - name: Partners
+  - name: Verification
+  - name: Screening
+  - name: Starter Kit
+  - name: Training
+  - name: Jobs
+  - name: Money
+  - name: Community
+  - name: Support
+  - name: Notifications
+  - name: Admin
+  - name: Webhooks
+
+paths:
+  /auth/otp/request:
+    post:
+      tags: [Auth]
+      summary: Request an OTP code for a phone number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone: { type: string, example: "9876543210" }
+      responses:
+        "200":
+          description: Code sent (or queued, in dev_local mode)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  phone: { type: string }
+                  expiresAt: { type: string, format: date-time }
+                  resendAvailableAt: { type: string, format: date-time }
+        "429": { description: Rate limited (too many requests, or resend cooldown active), content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } } }
+
+  /auth/otp/verify:
+    post:
+      tags: [Auth]
+      summary: Verify an OTP code and establish a session (creates the AppUser + Partner on first login)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone: { type: string }
+                code: { type: string, example: "123456" }
+      responses:
+        "200": { description: Authenticated, content: { application/json: { schema: { $ref: "#/components/schemas/SessionResponse" } } } }
+        "400": { description: Wrong/expired/consumed code, content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } } }
+
+  /auth/otp/dev/last-code:
+    get:
+      tags: [Auth]
+      summary: (dev_local mode only, never in prod) Read back the last OTP code sent to a phone
+      parameters:
+        - in: query
+          name: phone
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: object, properties: { phone: { type: string }, code: { type: string } } } } } }
+
+  /auth/staff/login:
+    post:
+      tags: [Auth]
+      summary: Staff (ADMIN/REVIEWER/TRAINER/FINANCE) username+password login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties: { username: { type: string }, password: { type: string } }
+      responses:
+        "200": { description: Authenticated, content: { application/json: { schema: { $ref: "#/components/schemas/SessionResponse" } } } }
+        "401": { description: Invalid credentials }
+
+  /auth/session:
+    get:
+      tags: [Auth]
+      summary: Current session info (works whether authenticated or not)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SessionResponse" } } } }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Invalidate the current session
+      responses: { "204": { description: Logged out } }
+
+  /catalog/categories:
+    get:
+      tags: [Catalog]
+      summary: List active work categories
+      responses: { "200": { description: OK } }
+
+  /catalog/categories/{categoryId}/services:
+    get:
+      tags: [Catalog]
+      parameters: [{ in: path, name: categoryId, required: true, schema: { type: integer } }]
+      responses: { "200": { description: OK } }
+
+  /catalog/cities:
+    get:
+      tags: [Catalog]
+      summary: List active service cities
+      responses: { "200": { description: OK } }
+
+  /catalog/cities/{cityId}/areas:
+    get:
+      tags: [Catalog]
+      parameters: [{ in: path, name: cityId, required: true, schema: { type: integer } }]
+      responses: { "200": { description: OK } }
+
+  /catalog/estimates:
+    get:
+      tags: [Catalog]
+      summary: Configurable demo earning-potential estimate
+      parameters:
+        - { in: query, name: categoryId, required: true, schema: { type: integer } }
+        - { in: query, name: cityId, required: true, schema: { type: integer } }
+        - { in: query, name: hours, required: true, schema: { type: string, enum: [FOUR, SIX, EIGHT] } }
+      responses: { "200": { description: "{available, demo, estimatedMonthlyPaise, assumptionsText}" } }
+
+  /catalog/policies/current:
+    get:
+      tags: [Catalog]
+      summary: Current TERMS/PRIVACY/MARKETING_CONSENT documents
+      responses: { "200": { description: OK } }
+
+  /partners/me:
+    get:
+      tags: [Partners]
+      summary: Current partner's onboarding/profile record (session-derived, never by id)
+      security: [{ sessionCookie: [] }]
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/PartnerMeResponse" } } } } }
+
+  /partners/me/basic-details:
+    patch: { tags: [Partners], summary: "Step A/B: name + preferred language", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/category:
+    put: { tags: [Partners], summary: "Step C: primary work category", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/city:
+    put: { tags: [Partners], summary: "Step D: residence city", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/consents:
+    post: { tags: [Partners], summary: "Step E: accept current Terms + Privacy (+ optional marketing opt-in)", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/earning-potential/ack:
+    post: { tags: [Partners], summary: "Step F: acknowledge the earning estimate screen", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/working-hours:
+    put: { tags: [Partners], summary: "Step G: FOUR/SIX/EIGHT hours choice", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/permissions/ack:
+    post: { tags: [Partners], summary: "Step H: acknowledge camera/location permission screen", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/profile:
+    put: { tags: [Partners], summary: Update experience/bio/languages, security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/profile/complete:
+    post: { tags: [Partners], summary: "Advance PROFILE -> TRAINING once required fields are present", security: [{ sessionCookie: [] }], responses: { "200": { description: OK }, "400": { description: Missing required fields } } }
+
+  /partners/me/coverage:
+    get: { tags: [Partners], summary: List covered area ids, security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+    put: { tags: [Partners], summary: Replace covered area ids, security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/bank-account:
+    get: { tags: [Partners], security: [{ sessionCookie: [] }], responses: { "200": { description: "OK (or null if none set)" } } }
+    put: { tags: [Partners], summary: "Create/replace payout bank account (syntactic validation only -> FORMAT_VALID)", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/verification:
+    get: { tags: [Verification], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+    post:
+      tags: [Verification]
+      summary: Submit an identity document (multipart)
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                docType: { type: string, enum: [AADHAAR, PAN, OTHER] }
+                file: { type: string, format: binary }
+      responses: { "200": { description: OK } }
+
+  /partners/me/verification/documents:
+    get: { tags: [Verification], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /partners/me/verification/documents/{documentId}/file:
+    get:
+      tags: [Verification]
+      security: [{ sessionCookie: [] }]
+      parameters: [{ in: path, name: documentId, required: true, schema: { type: integer } }]
+      responses: { "200": { description: File bytes (owner only) }, "403": { description: Not your document } }
+
+  /screening/slots:
+    get:
+      tags: [Screening]
+      parameters:
+        - { in: query, name: categoryId, required: true, schema: { type: integer } }
+        - { in: query, name: cityId, required: true, schema: { type: integer } }
+      responses: { "200": { description: Upcoming slots with remaining capacity } }
+
+  /screening/bookings:
+    get: { tags: [Screening], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+    post:
+      tags: [Screening]
+      summary: Book a slot (atomic capacity reservation)
+      security: [{ sessionCookie: [] }]
+      requestBody: { content: { application/json: { schema: { type: object, properties: { slotId: { type: integer } } } } } }
+      responses: { "200": { description: Booked }, "409": { description: Slot just filled up } }
+
+  /screening/bookings/{bookingId}/reschedule:
+    post: { tags: [Screening], security: [{ sessionCookie: [] }], parameters: [{ in: path, name: bookingId, required: true, schema: { type: integer } }], responses: { "200": { description: OK } } }
+
+  /screening/bookings/{bookingId}/cancel:
+    post: { tags: [Screening], security: [{ sessionCookie: [] }], parameters: [{ in: path, name: bookingId, required: true, schema: { type: integer } }], responses: { "200": { description: OK } } }
+
+  /screening/bookings/{bookingId}/check-in:
+    post: { tags: [Screening], summary: "Records attendance intent only -- never implies a pass", security: [{ sessionCookie: [] }], parameters: [{ in: path, name: bookingId, required: true, schema: { type: integer } }], responses: { "200": { description: OK } } }
+
+  /kit-orders/quote:
+    get: { tags: [Starter Kit], security: [{ sessionCookie: [] }], responses: { "200": { description: "{available, kit details, price breakdown}" } } }
+
+  /kit-orders:
+    get: { tags: [Starter Kit], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+    post:
+      tags: [Starter Kit]
+      summary: Book the starter kit (idempotent on idempotencyKey)
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deliveryAddressLine, deliveryCityId, idempotencyKey]
+              properties:
+                deliveryAddressLine: { type: string }
+                deliveryCityId: { type: integer }
+                idempotencyKey: { type: string }
+      responses: { "200": { description: Order (existing or newly created) } }
+
+  /kit-orders/{orderId}/cancel:
+    post: { tags: [Starter Kit], security: [{ sessionCookie: [] }], parameters: [{ in: path, name: orderId, required: true, schema: { type: integer } }], responses: { "200": { description: OK } } }
+
+  /training/courses:
+    get: { tags: [Training], responses: { "200": { description: OK } } }
+
+  /training/courses/{courseId}/modules:
+    get: { tags: [Training], parameters: [{ in: path, name: courseId, required: true, schema: { type: integer } }], responses: { "200": { description: OK } } }
+
+  /training/enrollments:
+    get: { tags: [Training], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /training/courses/{courseId}/modules/{moduleId}/complete:
+    post: { tags: [Training], summary: "Server-recorded progress -- opening a page is not, by itself, completion", security: [{ sessionCookie: [] }], parameters: [{ in: path, name: courseId, required: true, schema: { type: integer } }, { in: path, name: moduleId, required: true, schema: { type: integer } }], responses: { "200": { description: OK } } }
+
+  /training/courses/{courseId}/assessment:
+    get: { tags: [Training], summary: "Questions + options, without revealing correct answers", security: [{ sessionCookie: [] }], parameters: [{ in: path, name: courseId, required: true, schema: { type: integer } }], responses: { "200": { description: OK } } }
+
+  /training/courses/{courseId}/assessment/submit:
+    post:
+      tags: [Training]
+      summary: "Submit answers ({questionId: selectedOptionId}); graded entirely server-side"
+      security: [{ sessionCookie: [] }]
+      parameters: [{ in: path, name: courseId, required: true, schema: { type: integer } }]
+      responses: { "200": { description: "{scorePercent, passed, attemptNumber, attemptsRemaining}" } }
+
+  /jobs/nearby:
+    get:
+      tags: [Jobs]
+      summary: "Nearby OPEN jobs matching the partner's category/skills + coverage areas (customer identity never shown here)"
+      security: [{ sessionCookie: [] }]
+      responses: { "200": { description: OK } }
+
+  /jobs/assigned:
+    get: { tags: [Jobs], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /jobs/{jobId}:
+    get: { tags: [Jobs], summary: "Full detail incl. customer contact + exact address, only for the assigned partner", security: [{ sessionCookie: [] }], parameters: [{ in: path, name: jobId, required: true, schema: { type: integer } }], responses: { "200": { description: OK }, "403": { description: Not assigned to you } } }
+
+  /jobs/{jobId}/accept:
+    post: { tags: [Jobs], summary: "Atomic accept -- exactly one winner under concurrent accepts", security: [{ sessionCookie: [] }], parameters: [{ in: path, name: jobId, required: true, schema: { type: integer } }], responses: { "200": { description: Assigned }, "409": { description: Already taken } } }
+
+  /jobs/{jobId}/start:
+    post: { tags: [Jobs], security: [{ sessionCookie: [] }], parameters: [{ in: path, name: jobId, required: true, schema: { type: integer } }], responses: { "200": { description: OK } } }
+
+  /jobs/{jobId}/completion:
+    post:
+      tags: [Jobs]
+      summary: Submit completion with proof photos (multipart)
+      security: [{ sessionCookie: [] }]
+      parameters: [{ in: path, name: jobId, required: true, schema: { type: integer } }]
+      requestBody: { content: { multipart/form-data: { schema: { type: object, properties: { files: { type: array, items: { type: string, format: binary } } } } } } }
+      responses: { "200": { description: OK } }
+
+  /money/summary:
+    get: { tags: [Money], summary: "This calendar month (Asia/Kolkata) earned/available/scheduled/paid", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /money/ledger:
+    get: { tags: [Money], responses: { "200": { description: OK } }, security: [{ sessionCookie: [] }] }
+
+  /money/payouts:
+    get: { tags: [Money], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+    post: { tags: [Money], summary: "Request a payout (dev_simulator completes it synchronously)", security: [{ sessionCookie: [] }], responses: { "200": { description: OK }, "400": { description: Exceeds available balance } } }
+
+  /community/announcements:
+    get: { tags: [Community], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /community/posts:
+    get: { tags: [Community], security: [{ sessionCookie: [] }], responses: { "200": { description: Paged } } }
+    post: { tags: [Community], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /community/posts/{postId}/comments:
+    get: { tags: [Community], parameters: [{ in: path, name: postId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+    post: { tags: [Community], parameters: [{ in: path, name: postId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /community/reports:
+    post: { tags: [Community], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /support/tickets:
+    get: { tags: [Support], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+    post: { tags: [Support], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /support/tickets/{ticketId}/messages:
+    get: { tags: [Support], parameters: [{ in: path, name: ticketId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+    post: { tags: [Support], parameters: [{ in: path, name: ticketId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /notifications:
+    get: { tags: [Notifications], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /notifications/{id}/read:
+    post: { tags: [Notifications], parameters: [{ in: path, name: id, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/dashboard:
+    get: { tags: [Admin], summary: "Counts (total/active partners, pending verifications, open jobs, kit orders processing)", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/partners:
+    get: { tags: [Admin], summary: Paged partner list, security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/partners/{partnerId}:
+    get: { tags: [Admin], parameters: [{ in: path, name: partnerId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/partners/{partnerId}/activation-eligibility:
+    get: { tags: [Admin], summary: "Re-derived eligibility, not just onboardingStage", parameters: [{ in: path, name: partnerId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: "{eligible, unmetRequirements[]}" } } }
+
+  /admin/partners/{partnerId}/activate:
+    post: { tags: [Admin], summary: "ADMIN only; fails 400 if not eligible", parameters: [{ in: path, name: partnerId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK }, "400": { description: Not eligible } } }
+
+  /admin/partners/{partnerId}/suspend:
+    post: { tags: [Admin], parameters: [{ in: path, name: partnerId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/partners/{partnerId}/reactivate:
+    post: { tags: [Admin], parameters: [{ in: path, name: partnerId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/verification/pending:
+    get: { tags: [Admin], summary: "ADMIN or REVIEWER", security: [{ sessionCookie: [] }], responses: { "200": { description: Paged } } }
+
+  /admin/verification/{partnerId}/decision:
+    post: { tags: [Admin], parameters: [{ in: path, name: partnerId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/screening/slots:
+    post: { tags: [Admin], summary: "ADMIN only: create a screening slot", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/screening/bookings/{bookingId}/decision:
+    post: { tags: [Admin], summary: "ADMIN or REVIEWER: PASS/FAIL outcome for a checked-in booking", parameters: [{ in: path, name: bookingId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/kit-orders/{orderId}/status:
+    patch: { tags: [Admin], parameters: [{ in: path, name: orderId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/kit-orders/exempt/{partnerId}:
+    post: { tags: [Admin], summary: "Audited exemption from the starter-kit gate", parameters: [{ in: path, name: partnerId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/catalog/categories:
+    post: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/catalog/services:
+    post: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/catalog/cities:
+    post: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/catalog/areas:
+    post: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/catalog/estimates:
+    post: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/catalog/policies:
+    post: { tags: [Admin], summary: "Publishes a new current version, retiring the previous one", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/catalog/starter-kits:
+    post: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/training/courses:
+    post: { tags: [Admin], summary: "ADMIN or TRAINER", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/training/courses/{courseId}/modules:
+    post: { tags: [Admin], parameters: [{ in: path, name: courseId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/training/courses/{courseId}/assessment:
+    post: { tags: [Admin], parameters: [{ in: path, name: courseId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/training/assessments/{assessmentId}/questions:
+    post: { tags: [Admin], parameters: [{ in: path, name: assessmentId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/jobs/customers:
+    post: { tags: [Admin], summary: "Create a synthetic customer (no real customer app in this build)", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/jobs/customers/{customerId}/addresses:
+    post: { tags: [Admin], parameters: [{ in: path, name: customerId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/jobs/service-requests:
+    post: { tags: [Admin], summary: "Create an OPEN job", security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+    get: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/jobs/service-requests/{id}/confirm-completion:
+    post: { tags: [Admin], summary: "Stands in for the brief's admin/customer-confirmation adapter; triggers the exactly-once earning entry", parameters: [{ in: path, name: id, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/jobs/service-requests/{id}/cancel:
+    post: { tags: [Admin], parameters: [{ in: path, name: id, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/jobs/service-requests/{id}/dispute:
+    post: { tags: [Admin], parameters: [{ in: path, name: id, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/money/partners/{partnerId}/adjustments:
+    post: { tags: [Admin], summary: "ADMIN or FINANCE: BONUS/PENALTY/DEDUCTION/REVERSAL", parameters: [{ in: path, name: partnerId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/money/earnings/{earningEntryId}/reverse:
+    post: { tags: [Admin], parameters: [{ in: path, name: earningEntryId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/community/announcements:
+    post: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/community/reports:
+    get: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/community/posts/{postId}/moderate:
+    post: { tags: [Admin], parameters: [{ in: path, name: postId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/support/tickets:
+    get: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: Paged } } }
+
+  /admin/support/tickets/{ticketId}/messages:
+    post: { tags: [Admin], parameters: [{ in: path, name: ticketId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/support/tickets/{ticketId}/status:
+    patch: { tags: [Admin], parameters: [{ in: path, name: ticketId, required: true, schema: { type: integer } }], security: [{ sessionCookie: [] }], responses: { "200": { description: OK } } }
+
+  /admin/audit-logs:
+    get: { tags: [Admin], security: [{ sessionCookie: [] }], responses: { "200": { description: Paged } } }
+
+  /webhooks/kit-payments:
+    post:
+      tags: [Webhooks]
+      summary: "Signature-verified provider event (not wired to a real provider in this build)"
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/WebhookEnvelope" } } } }
+      responses: { "200": { description: OK }, "400": { description: Bad/missing signature } }
+
+  /webhooks/payouts:
+    post:
+      tags: [Webhooks]
+      summary: "Signature-verified, idempotent on provider_event_id"
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/WebhookEnvelope" } } } }
+      responses: { "200": { description: OK }, "400": { description: Bad/missing signature } }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: SB_SESSION
+  schemas:
+    ApiError:
+      type: object
+      properties:
+        timestamp: { type: string, format: date-time }
+        status: { type: integer }
+        error: { type: string }
+        message: { type: string }
+        path: { type: string }
+        fieldErrors:
+          type: array
+          items: { type: object, properties: { field: { type: string }, message: { type: string } } }
+    SessionResponse:
+      type: object
+      properties:
+        authenticated: { type: boolean }
+        userId: { type: integer }
+        displayName: { type: string }
+        roles: { type: array, items: { type: string, enum: [PARTNER, ADMIN, REVIEWER, TRAINER, FINANCE] } }
+    PartnerMeResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        primaryCategoryId: { type: integer, nullable: true }
+        residenceCityId: { type: integer, nullable: true }
+        experienceYears: { type: integer, nullable: true }
+        bio: { type: string, nullable: true }
+        photoStorageKey: { type: string, nullable: true }
+        workingHoursChoice: { type: string, enum: [FOUR, SIX, EIGHT], nullable: true }
+        onboardingStage:
+          type: string
+          enum: [BASIC_DETAILS, WORK_CATEGORY, CITY, TERMS_PRIVACY, EARNING_POTENTIAL, WORKING_HOURS, PERMISSIONS, VERIFICATION, SCREENING, STARTER_KIT, PROFILE, TRAINING, ACTIVATION_REVIEW, COMPLETE]
+        activationStatus: { type: string, enum: [NOT_ACTIVE, ACTIVE, SUSPENDED] }
+        suspendedReason: { type: string, nullable: true }
+        languages: { type: array, items: { type: string } }
+    WebhookEnvelope:
+      type: object
+      required: [eventId, payload, signature]
+      properties:
+        eventId: { type: string }
+        payload: { type: object }
+        signature: { type: string, description: "hex(hmac_sha256(secret, eventId + payloadJson))" }

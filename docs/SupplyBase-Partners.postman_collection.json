@@ -1,0 +1,241 @@
+{
+  "info": {
+    "name": "SupplyBase Partners",
+    "description": "Core flows against the local/docker deployment. Import, set the baseUrl/phone variables, and run the Auth folder first -- Postman's cookie jar carries the session automatically.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
+    { "key": "phone", "value": "9876543210" },
+    { "key": "otpCode", "value": "" },
+    { "key": "categoryId", "value": "1" },
+    { "key": "cityId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Prime CSRF cookie",
+          "request": { "method": "GET", "url": "{{baseUrl}}/catalog/categories" }
+        },
+        {
+          "name": "Request OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"phone\": \"{{phone}}\"}" },
+            "url": "{{baseUrl}}/auth/otp/request"
+          }
+        },
+        {
+          "name": "Dev: read last OTP code",
+          "request": { "method": "GET", "url": "{{baseUrl}}/auth/otp/dev/last-code?phone=%2B91{{phone}}" }
+        },
+        {
+          "name": "Verify OTP (logs in)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"phone\": \"{{phone}}\", \"code\": \"{{otpCode}}\"}" },
+            "url": "{{baseUrl}}/auth/otp/verify"
+          }
+        },
+        {
+          "name": "Current session",
+          "request": { "method": "GET", "url": "{{baseUrl}}/auth/session" }
+        },
+        {
+          "name": "Staff login (admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"username\": \"admin\", \"password\": \"ChangeMe123!\"}" },
+            "url": "{{baseUrl}}/auth/staff/login"
+          }
+        },
+        { "name": "Logout", "request": { "method": "POST", "url": "{{baseUrl}}/auth/logout" } }
+      ]
+    },
+    {
+      "name": "Catalog",
+      "item": [
+        { "name": "Categories", "request": { "method": "GET", "url": "{{baseUrl}}/catalog/categories" } },
+        { "name": "Cities", "request": { "method": "GET", "url": "{{baseUrl}}/catalog/cities" } },
+        { "name": "Areas for city", "request": { "method": "GET", "url": "{{baseUrl}}/catalog/cities/{{cityId}}/areas" } },
+        { "name": "Earning estimate", "request": { "method": "GET", "url": "{{baseUrl}}/catalog/estimates?categoryId={{categoryId}}&cityId={{cityId}}&hours=EIGHT" } },
+        { "name": "Current policies", "request": { "method": "GET", "url": "{{baseUrl}}/catalog/policies/current" } }
+      ]
+    },
+    {
+      "name": "Onboarding (partners/me)",
+      "item": [
+        { "name": "Get me", "request": { "method": "GET", "url": "{{baseUrl}}/partners/me" } },
+        {
+          "name": "Basic details",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"name\": \"Test Partner\", \"preferredLanguage\": \"en\"}" },
+            "url": "{{baseUrl}}/partners/me/basic-details"
+          }
+        },
+        {
+          "name": "Select category",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"categoryId\": {{categoryId}}}" },
+            "url": "{{baseUrl}}/partners/me/category"
+          }
+        },
+        {
+          "name": "Select city",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"cityId\": {{cityId}}}" },
+            "url": "{{baseUrl}}/partners/me/city"
+          }
+        },
+        {
+          "name": "Accept consents",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"marketingOptIn\": false}" },
+            "url": "{{baseUrl}}/partners/me/consents"
+          }
+        },
+        { "name": "Ack earning potential", "request": { "method": "POST", "header": [{ "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }], "url": "{{baseUrl}}/partners/me/earning-potential/ack" } },
+        {
+          "name": "Set working hours",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"choice\": \"EIGHT\"}" },
+            "url": "{{baseUrl}}/partners/me/working-hours"
+          }
+        },
+        { "name": "Ack permissions", "request": { "method": "POST", "header": [{ "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }], "url": "{{baseUrl}}/partners/me/permissions/ack" } },
+        { "name": "Mark profile complete", "request": { "method": "POST", "header": [{ "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }], "url": "{{baseUrl}}/partners/me/profile/complete" } }
+      ]
+    },
+    {
+      "name": "Verification",
+      "item": [
+        { "name": "Status", "request": { "method": "GET", "url": "{{baseUrl}}/partners/me/verification" } },
+        { "name": "My documents", "request": { "method": "GET", "url": "{{baseUrl}}/partners/me/verification/documents" } },
+        { "name": "Admin: pending queue", "request": { "method": "GET", "url": "{{baseUrl}}/admin/verification/pending" } },
+        {
+          "name": "Admin: approve/reject",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"approve\": true, \"reason\": \"Looks good\"}" },
+            "url": "{{baseUrl}}/admin/verification/1/decision"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Screening",
+      "item": [
+        { "name": "Available slots", "request": { "method": "GET", "url": "{{baseUrl}}/screening/slots?categoryId={{categoryId}}&cityId={{cityId}}" } },
+        { "name": "My bookings", "request": { "method": "GET", "url": "{{baseUrl}}/screening/bookings" } },
+        {
+          "name": "Book a slot",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"slotId\": 1}" },
+            "url": "{{baseUrl}}/screening/bookings"
+          }
+        },
+        { "name": "Check in", "request": { "method": "POST", "header": [{ "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }], "url": "{{baseUrl}}/screening/bookings/1/check-in" } },
+        {
+          "name": "Admin: decide outcome",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"passed\": true, \"reason\": \"Confident and prepared\"}" },
+            "url": "{{baseUrl}}/admin/screening/bookings/1/decision"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Starter Kit",
+      "item": [
+        { "name": "Quote", "request": { "method": "GET", "url": "{{baseUrl}}/kit-orders/quote" } },
+        { "name": "My orders", "request": { "method": "GET", "url": "{{baseUrl}}/kit-orders" } },
+        {
+          "name": "Book kit",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"deliveryAddressLine\": \"1 Test Street\", \"deliveryCityId\": {{cityId}}, \"idempotencyKey\": \"{{$guid}}\"}" },
+            "url": "{{baseUrl}}/kit-orders"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Training",
+      "item": [
+        { "name": "Courses", "request": { "method": "GET", "url": "{{baseUrl}}/training/courses" } },
+        { "name": "Modules", "request": { "method": "GET", "url": "{{baseUrl}}/training/courses/1/modules" } },
+        { "name": "Assessment questions", "request": { "method": "GET", "url": "{{baseUrl}}/training/courses/1/assessment" } },
+        {
+          "name": "Submit assessment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"1\": 1, \"2\": 3, \"3\": 5}" },
+            "url": "{{baseUrl}}/training/courses/1/assessment/submit"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        { "name": "Nearby", "request": { "method": "GET", "url": "{{baseUrl}}/jobs/nearby" } },
+        { "name": "Assigned", "request": { "method": "GET", "url": "{{baseUrl}}/jobs/assigned" } },
+        { "name": "Accept", "request": { "method": "POST", "header": [{ "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }], "url": "{{baseUrl}}/jobs/1/accept" } },
+        { "name": "Start", "request": { "method": "POST", "header": [{ "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }], "url": "{{baseUrl}}/jobs/1/start" } },
+        {
+          "name": "Admin: confirm completion",
+          "request": { "method": "POST", "header": [{ "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }], "url": "{{baseUrl}}/admin/jobs/service-requests/1/confirm-completion" }
+        }
+      ]
+    },
+    {
+      "name": "Money",
+      "item": [
+        { "name": "Summary", "request": { "method": "GET", "url": "{{baseUrl}}/money/summary" } },
+        { "name": "Ledger", "request": { "method": "GET", "url": "{{baseUrl}}/money/ledger" } },
+        {
+          "name": "Request payout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }],
+            "body": { "mode": "raw", "raw": "{\"amountPaise\": 50000}" },
+            "url": "{{baseUrl}}/money/payouts"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        { "name": "Dashboard counts", "request": { "method": "GET", "url": "{{baseUrl}}/admin/dashboard" } },
+        { "name": "Partner list", "request": { "method": "GET", "url": "{{baseUrl}}/admin/partners" } },
+        { "name": "Partner detail", "request": { "method": "GET", "url": "{{baseUrl}}/admin/partners/1" } },
+        { "name": "Activation eligibility", "request": { "method": "GET", "url": "{{baseUrl}}/admin/partners/1/activation-eligibility" } },
+        { "name": "Activate partner", "request": { "method": "POST", "header": [{ "key": "X-XSRF-TOKEN", "value": "{{XSRF-TOKEN}}" }], "url": "{{baseUrl}}/admin/partners/1/activate" } },
+        { "name": "Audit logs", "request": { "method": "GET", "url": "{{baseUrl}}/admin/audit-logs" } }
+      ]
+    }
+  ]
+}

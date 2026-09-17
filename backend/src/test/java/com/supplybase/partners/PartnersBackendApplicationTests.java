@@ -1,10 +1,9 @@
 package com.supplybase.partners;
 
+import com.supplybase.partners.testsupport.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class PartnersBackendApplicationTests {
+class PartnersBackendApplicationTests extends AbstractIntegrationTest {
 
 	@Test
 	void contextLoads() {
