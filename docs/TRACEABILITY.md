@@ -38,6 +38,7 @@ decisions made where the PDF only described behavior, not layout.
   extension points instead).
 - A live map view on Around You (list view only; an honest "map not available"
   note is shown rather than a broken map).
-- Dedicated admin screens for catalog/training/starter-kit authoring and
-  screening-slot creation (the REST endpoints exist and were exercised
-  directly; no frontend page wraps them yet).
+- Dedicated admin screens for services/areas/estimates/policies/starter-kit/
+  training authoring and screening-slot creation (the REST endpoints exist
+  and were exercised directly; no frontend page wraps them yet). Categories
+  and cities do have an admin screen (`pages/admin/AdminCatalog.jsx`).

@@ -5,6 +5,7 @@ import RequireStaff from './components/RequireStaff'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import AdminAuditLogs from './pages/admin/AdminAuditLogs'
+import AdminCatalog from './pages/admin/AdminCatalog'
 import AdminCommunity from './pages/admin/AdminCommunity'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminLogin from './pages/admin/AdminLogin'
@@ -79,6 +80,7 @@ export default function App() {
               <Route path="partners" element={<AdminPartners />} />
               <Route path="partners/:partnerId" element={<AdminPartnerDetail />} />
               <Route path="verification" element={<AdminVerification />} />
+              <Route path="catalog" element={<AdminCatalog />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="community" element={<AdminCommunity />} />
               <Route path="audit-logs" element={<AdminAuditLogs />} />
