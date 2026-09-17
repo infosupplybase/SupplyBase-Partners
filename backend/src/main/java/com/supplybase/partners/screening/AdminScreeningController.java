@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -16,12 +17,28 @@ public class AdminScreeningController {
 
     private final ScreeningService screeningService;
     private final ScreeningSlotRepository slotRepository;
+    private final ScreeningBookingRepository bookingRepository;
     private final CurrentUser currentUser;
 
-    public AdminScreeningController(ScreeningService screeningService, ScreeningSlotRepository slotRepository, CurrentUser currentUser) {
+    public AdminScreeningController(ScreeningService screeningService, ScreeningSlotRepository slotRepository,
+                                     ScreeningBookingRepository bookingRepository, CurrentUser currentUser) {
         this.screeningService = screeningService;
         this.slotRepository = slotRepository;
+        this.bookingRepository = bookingRepository;
         this.currentUser = currentUser;
+    }
+
+    @GetMapping("/slots")
+    public List<SlotResponse> slots() {
+        return slotRepository.findAll().stream()
+                .sorted((a, b) -> a.getStartsAt().compareTo(b.getStartsAt()))
+                .map(SlotResponse::from).toList();
+    }
+
+    @GetMapping("/bookings/checked-in")
+    public List<BookingResponse> checkedIn() {
+        return bookingRepository.findAllByStatusOrderByCreatedAtAsc(ScreeningBooking.Status.CHECKED_IN).stream()
+                .map(BookingResponse::from).toList();
     }
 
     @PostMapping("/slots")

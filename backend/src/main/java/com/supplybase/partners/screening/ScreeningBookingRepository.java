@@ -9,4 +9,6 @@ public interface ScreeningBookingRepository extends JpaRepository<ScreeningBooki
     List<ScreeningBooking> findAllByPartnerIdOrderByCreatedAtDesc(Long partnerId);
 
     Optional<ScreeningBooking> findFirstByPartnerIdAndStatusInOrderByCreatedAtDesc(Long partnerId, List<ScreeningBooking.Status> statuses);
+
+    List<ScreeningBooking> findAllByStatusOrderByCreatedAtAsc(ScreeningBooking.Status status);
 }

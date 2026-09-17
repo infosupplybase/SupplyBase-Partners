@@ -8,9 +8,12 @@ import AdminAuditLogs from './pages/admin/AdminAuditLogs'
 import AdminCatalog from './pages/admin/AdminCatalog'
 import AdminCommunity from './pages/admin/AdminCommunity'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminJobs from './pages/admin/AdminJobs'
+import AdminKitOrders from './pages/admin/AdminKitOrders'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminPartnerDetail from './pages/admin/AdminPartnerDetail'
 import AdminPartners from './pages/admin/AdminPartners'
+import AdminScreening from './pages/admin/AdminScreening'
 import AdminShell from './pages/admin/AdminShell'
 import AdminSupport from './pages/admin/AdminSupport'
 import AdminVerification from './pages/admin/AdminVerification'
@@ -81,6 +84,9 @@ export default function App() {
               <Route path="partners/:partnerId" element={<AdminPartnerDetail />} />
               <Route path="verification" element={<AdminVerification />} />
               <Route path="catalog" element={<AdminCatalog />} />
+              <Route path="screening" element={<AdminScreening />} />
+              <Route path="kit-orders" element={<AdminKitOrders />} />
+              <Route path="jobs" element={<AdminJobs />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="community" element={<AdminCommunity />} />
               <Route path="audit-logs" element={<AdminAuditLogs />} />
