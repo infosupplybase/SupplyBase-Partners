@@ -1,0 +1,17 @@
+# Normalize line endings to LF in the repository regardless of a
+# contributor's platform/core.autocrlf setting, so diffs stay clean and
+# Windows checkouts don't silently rewrite every file's line endings on
+# first edit.
+* text=auto eol=lf
+
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Windows-only scripts genuinely need CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
