@@ -186,3 +186,7 @@ exercised end-to-end, or a documented gap. In short:
   made beyond the literal source brief, and why.
 - [`docs/openapi.yaml`](docs/openapi.yaml) — API reference.
 - [`docs/SupplyBase-Partners.postman_collection.json`](docs/SupplyBase-Partners.postman_collection.json) — importable Postman collection.
+- [`docs/ER_DIAGRAM.md`](docs/ER_DIAGRAM.md) — schema, grouped by domain.
+- [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md) — brief section → screen/endpoint mapping.
+- [`docs/MANUAL_QA.md`](docs/MANUAL_QA.md) — manual walkthrough script.
+- [`docs/COMPLETION_CHECKLIST.md`](docs/COMPLETION_CHECKLIST.md) — acceptance-criteria status, and exactly what has/hasn't been run.
