@@ -28,11 +28,18 @@ exercised in a running environment · ⬜ not implemented.
 ✅ OTP request against a backend with no reachable database confirmed a clean
    error message in the UI (502 handled gracefully, no crash) rather than a
    silent failure
-⬜ Flyway migrations against a real MySQL instance
-⬜ ./mvnw test (Testcontainers — needs a Docker engine)
-⬜ docker compose up (full stack)
+⬜ Flyway migrations against a real MySQL instance, locally
+⬜ docker compose up (full stack), locally
 ⬜ Any authenticated flow beyond the OTP-request screen (needs a live backend)
 ```
+
+`.github/workflows/ci.yml` now runs `./mvnw clean verify` on every push/PR —
+GitHub Actions' `ubuntu-latest` runners ship Docker preinstalled, so this is
+where the Testcontainers integration tests (and therefore the Flyway
+migrations, against a real ephemeral MySQL) actually execute for the first
+time, closing that gap without needing Docker in this build environment.
+**Check the CI badge/Actions tab for the real result** before trusting that
+`./mvnw test` passes — it was written and reviewed, not run, here.
 
 A local MySQL 8 service was available on this machine, but the user asked to
 validate via Docker Compose later rather than have this session use it — see

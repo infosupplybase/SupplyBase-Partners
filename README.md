@@ -1,5 +1,7 @@
 # SupplyBase Partners
 
+[![CI](https://github.com/infosupplybase/SupplyBase-Partners/actions/workflows/ci.yml/badge.svg)](https://github.com/infosupplybase/SupplyBase-Partners/actions/workflows/ci.yml)
+
 The professional-facing platform for SupplyBase: service professionals join, complete
 verification and onboarding, attend a skill session, obtain a starter kit, complete
 training, become active, find nearby jobs, and track earnings. Admin staff review
