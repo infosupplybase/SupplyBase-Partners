@@ -1,0 +1,11 @@
+{
+  "name": "SupplyBase Partners",
+  "short_name": "SB Partners",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f8f6",
+  "theme_color": "#0f6b3f",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
