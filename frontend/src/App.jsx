@@ -11,6 +11,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminJobs from './pages/admin/AdminJobs'
 import AdminKitOrders from './pages/admin/AdminKitOrders'
 import AdminLogin from './pages/admin/AdminLogin'
+import AdminMoney from './pages/admin/AdminMoney'
 import AdminPartnerDetail from './pages/admin/AdminPartnerDetail'
 import AdminPartners from './pages/admin/AdminPartners'
 import AdminScreening from './pages/admin/AdminScreening'
@@ -89,6 +90,7 @@ export default function App() {
               <Route path="kit-orders" element={<AdminKitOrders />} />
               <Route path="jobs" element={<AdminJobs />} />
               <Route path="training" element={<AdminTraining />} />
+              <Route path="money" element={<AdminMoney />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="community" element={<AdminCommunity />} />
               <Route path="audit-logs" element={<AdminAuditLogs />} />
