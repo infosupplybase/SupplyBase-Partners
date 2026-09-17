@@ -1,0 +1,21 @@
+# For running the backend directly on a developer machine (mvnw spring-boot:run)
+# against a MySQL instance on localhost, e.g. started via docker compose.
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+        same-site: lax
+
+supplybase:
+  admin-bootstrap:
+    username: ${ADMIN_BOOTSTRAP_USERNAME:admin}
+    password: ${ADMIN_BOOTSTRAP_PASSWORD:ChangeMe123!}
+
+logging:
+  level:
+    com.supplybase.partners: DEBUG

@@ -1,0 +1,19 @@
+# Production profile. Deliberately narrow: only the reviewed schema migrations
+# run (never db/seed), cookies require HTTPS, and ProdSafetyConfig fails fast
+# at startup if admin bootstrap credentials or a real provider mode were left
+# on a dev/local default.
+spring:
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+        same-site: strict
+
+logging:
+  level:
+    com.supplybase.partners: INFO
+    org.hibernate.SQL: WARN

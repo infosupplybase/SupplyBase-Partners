@@ -1,0 +1,19 @@
+# Used when the backend itself runs inside docker compose, talking to the
+# "mysql" service by its compose network name.
+spring:
+  datasource:
+    url: jdbc:mysql://mysql:3306/supplybase_partners?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_0900_ai_ci&serverTimezone=UTC
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+        same-site: lax
+
+supplybase:
+  admin-bootstrap:
+    username: ${ADMIN_BOOTSTRAP_USERNAME:admin}
+    password: ${ADMIN_BOOTSTRAP_PASSWORD:ChangeMe123!}

@@ -1,0 +1,19 @@
+# Used by @SpringBootTest integration tests, which point datasource.url at a
+# Testcontainers-managed MySQL instance (see AbstractIntegrationTest) rather
+# than H2 -- H2 does not reliably reproduce MySQL locking/constraint behavior.
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+
+supplybase:
+  admin-bootstrap:
+    enabled: false

@@ -1,0 +1,56 @@
+# Run from the repository root: docker compose -f infra/docker-compose.yml up --build
+# MySQL is never published beyond the compose network; only the backend and
+# frontend ports are exposed to the host, per the build brief.
+
+name: supplybase-partners
+
+services:
+  mysql:
+    image: mysql:8.4.3
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: supplybase_partners
+      MYSQL_USER: ${DB_USERNAME:-supplybase}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-supplybase}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-supplybase_root}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-supplybase_root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ../backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      DB_URL: jdbc:mysql://mysql:3306/supplybase_partners?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_0900_ai_ci&serverTimezone=UTC
+      DB_USERNAME: ${DB_USERNAME:-supplybase}
+      DB_PASSWORD: ${DB_PASSWORD:-supplybase}
+      ADMIN_BOOTSTRAP_USERNAME: ${ADMIN_BOOTSTRAP_USERNAME:-admin}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-ChangeMe123!}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8081}
+      WEBHOOKS_SHARED_SECRET: ${WEBHOOKS_SHARED_SECRET:-dev-local-webhook-secret-change-me}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - backend-storage:/app/data/storage
+
+  frontend:
+    build:
+      context: ../frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-8081}:80"
+
+volumes:
+  mysql-data:
+  backend-storage:
