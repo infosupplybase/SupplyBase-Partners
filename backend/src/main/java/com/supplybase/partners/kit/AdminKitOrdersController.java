@@ -1,8 +1,8 @@
 package com.supplybase.partners.kit;
 
+import com.supplybase.partners.common.web.PageResponse;
 import com.supplybase.partners.identity.CurrentUser;
 import com.supplybase.partners.kit.dto.KitOrderResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,9 +26,9 @@ public class AdminKitOrdersController {
     }
 
     @GetMapping
-    public Page<KitOrderResponse> list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return kitOrderRepository.findAll(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")))
-                .map(KitOrderResponse::from);
+    public PageResponse<KitOrderResponse> list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return PageResponse.from(kitOrderRepository.findAll(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")))
+                .map(KitOrderResponse::from));
     }
 
     @PatchMapping("/{orderId}/status")

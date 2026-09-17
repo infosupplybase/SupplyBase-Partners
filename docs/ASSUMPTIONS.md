@@ -158,6 +158,18 @@ complete synchronously and are clearly logged as simulated; the
 callback and is idempotent on `provider_event_id` (duplicate delivery is a
 no-op), but no real payout provider is wired up.
 
+## Pagination
+
+No controller returns a raw Spring Data `Page<T>` as its response body.
+Spring Data's own JSON shape for `Page` has shifted across versions (a flat
+legacy structure vs. a nested `PagedModel`-style `page: {...}` object), and
+`spring-data-commons` 4.1.1 ships *both* a legacy and a Jackson-3-specific
+`PageModule`, which made the actual wire format this build would produce
+genuinely uncertain without running it. Every paged endpoint instead returns
+`common.web.PageResponse<T>` — a small, fixed `{content, page, size,
+totalElements, totalPages, last}` record — so the contract is explicit and
+stable regardless of Spring Data's internal serialization choices.
+
 ## Auth & security
 
 Partners authenticate by **phone OTP only** (rate-limited per phone/hour,

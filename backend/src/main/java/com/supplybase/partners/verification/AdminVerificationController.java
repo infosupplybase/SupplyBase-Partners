@@ -1,10 +1,10 @@
 package com.supplybase.partners.verification;
 
+import com.supplybase.partners.common.web.PageResponse;
 import com.supplybase.partners.identity.CurrentUser;
 import com.supplybase.partners.verification.dto.AdminVerificationItemResponse;
 import com.supplybase.partners.verification.dto.VerificationStatusResponse;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,11 +34,11 @@ public class AdminVerificationController {
     }
 
     @GetMapping("/pending")
-    public Page<AdminVerificationItemResponse> pending(@RequestParam(defaultValue = "0") int page,
+    public PageResponse<AdminVerificationItemResponse> pending(@RequestParam(defaultValue = "0") int page,
                                                          @RequestParam(defaultValue = "20") int size) {
-        return verificationRequestRepository
+        return PageResponse.from(verificationRequestRepository
                 .findAllByStatus(VerificationRequest.Status.PENDING_REVIEW, PageRequest.of(page, size))
-                .map(AdminVerificationItemResponse::from);
+                .map(AdminVerificationItemResponse::from));
     }
 
     @PostMapping("/{partnerId}/decision")

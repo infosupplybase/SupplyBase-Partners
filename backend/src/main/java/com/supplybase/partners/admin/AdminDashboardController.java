@@ -8,9 +8,9 @@ import com.supplybase.partners.kit.KitOrder;
 import com.supplybase.partners.kit.KitOrderRepository;
 import com.supplybase.partners.partner.Partner;
 import com.supplybase.partners.partner.PartnerRepository;
+import com.supplybase.partners.common.web.PageResponse;
 import com.supplybase.partners.verification.VerificationRequest;
 import com.supplybase.partners.verification.VerificationRequestRepository;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,7 +54,7 @@ public class AdminDashboardController {
     }
 
     @GetMapping("/audit-logs")
-    public Page<AuditLog> auditLogs(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size) {
-        return auditLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size));
+    public PageResponse<AuditLog> auditLogs(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size) {
+        return PageResponse.from(auditLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size)));
     }
 }

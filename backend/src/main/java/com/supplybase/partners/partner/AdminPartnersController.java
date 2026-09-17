@@ -1,8 +1,8 @@
 package com.supplybase.partners.partner;
 
+import com.supplybase.partners.common.web.PageResponse;
 import com.supplybase.partners.identity.CurrentUser;
 import com.supplybase.partners.partner.dto.PartnerMeResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,8 +29,8 @@ public class AdminPartnersController {
     }
 
     @GetMapping
-    public Page<PartnerMeResponse> list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return partnerRepository.findAll(PageRequest.of(page, size)).map(PartnerMeResponse::from);
+    public PageResponse<PartnerMeResponse> list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return PageResponse.from(partnerRepository.findAll(PageRequest.of(page, size)).map(PartnerMeResponse::from));
     }
 
     @GetMapping("/{partnerId}")

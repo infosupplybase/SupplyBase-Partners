@@ -1,7 +1,7 @@
 package com.supplybase.partners.support;
 
+import com.supplybase.partners.common.web.PageResponse;
 import com.supplybase.partners.identity.CurrentUser;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,9 +24,9 @@ public class AdminSupportController {
     }
 
     @GetMapping("/tickets")
-    public Page<SupportTicket> tickets(@RequestParam(defaultValue = "OPEN") SupportTicket.Status status,
+    public PageResponse<SupportTicket> tickets(@RequestParam(defaultValue = "OPEN") SupportTicket.Status status,
                                         @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return ticketRepository.findAllByStatusOrderByCreatedAtDesc(status, PageRequest.of(page, size));
+        return PageResponse.from(ticketRepository.findAllByStatusOrderByCreatedAtDesc(status, PageRequest.of(page, size)));
     }
 
     @PostMapping("/tickets/{ticketId}/messages")

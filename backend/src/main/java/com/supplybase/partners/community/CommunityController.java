@@ -1,9 +1,9 @@
 package com.supplybase.partners.community;
 
+import com.supplybase.partners.common.web.PageResponse;
 import com.supplybase.partners.identity.CurrentUser;
 import com.supplybase.partners.partner.Partner;
 import com.supplybase.partners.partner.PartnerService;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,8 +32,8 @@ public class CommunityController {
     }
 
     @GetMapping("/posts")
-    public Page<CommunityPost> posts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return communityService.posts(PageRequest.of(page, size));
+    public PageResponse<CommunityPost> posts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return PageResponse.from(communityService.posts(PageRequest.of(page, size)));
     }
 
     @GetMapping("/posts/{postId}/comments")
